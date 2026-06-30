@@ -1,0 +1,26 @@
+name = "bagwellproperties"
+main = "src/index.ts"
+compatibility_date = "2026-06-30"
+compatibility_flags = ["nodejs_compat"]
+
+account_id = "cd42ba0fcc5fcdd298c836c6b0fb038c"
+
+# Static site files served from ./public (Workers Assets).
+# Requests that don't match an asset fall through to the Worker (src/index.ts).
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# D1 database — bound as env.DB inside the Worker.
+[[d1_databases]]
+binding = "DB"
+database_name = "bagwellproperties-db"
+database_id = "d21c63ff-6462-4863-8597-5fc85e7a99a5"
+migrations_dir = "migrations"
+
+# Custom domain routing (uncomment when ready to go live on the real zone):
+# routes = [
+#   { pattern = "bagwellproperties.com", custom_domain = true },
+#   { pattern = "www.bagwellproperties.com", custom_domain = true },
+# ]

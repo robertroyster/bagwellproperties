@@ -1,0 +1,17 @@
+{
+  "name": "bagwellproperties",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "typegen": "wrangler types",
+    "db:console": "wrangler d1 execute bagwellproperties-db --command",
+    "db:migrate:local": "wrangler d1 migrations apply bagwellproperties-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply bagwellproperties-db --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.105.0"
+  }
+}
