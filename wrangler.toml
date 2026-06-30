@@ -1,26 +1,27 @@
 name = "bagwellproperties"
-main = "src/index.ts"
+main = "worker/index.ts"
 compatibility_date = "2026-06-30"
 compatibility_flags = ["nodejs_compat"]
 
 account_id = "cd42ba0fcc5fcdd298c836c6b0fb038c"
 
-# Static site files served from ./public (Workers Assets).
-# Requests that don't match an asset fall through to the Worker (src/index.ts).
+# Live route — bp.tlbm.cc (tlbm.cc zone is already on Cloudflare).
+routes = [
+  { pattern = "bp.tlbm.cc", custom_domain = true },
+]
+
+# Built React SPA, served as static assets; unmatched routes fall through to the Worker.
 [assets]
-directory = "./public"
+directory = "./dist/public"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
-# D1 database — bound as env.DB inside the Worker.
 [[d1_databases]]
 binding = "DB"
-database_name = "bagwellproperties-db"
-database_id = "d21c63ff-6462-4863-8597-5fc85e7a99a5"
+database_name = "bagwell-site"
+database_id = "a7cf06cc-1ec3-44ee-b1d8-8dccfaa629e6"
 migrations_dir = "migrations"
 
-# Custom domain routing (uncomment when ready to go live on the real zone):
-# routes = [
-#   { pattern = "bagwellproperties.com", custom_domain = true },
-#   { pattern = "www.bagwellproperties.com", custom_domain = true },
-# ]
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "bagwell-assets"

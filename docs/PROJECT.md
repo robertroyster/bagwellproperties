@@ -1,41 +1,49 @@
 # Project Notes
 
-Details that CLAUDE.md points to. For separate topics, create new `.md` files and
-link them from this page.
-
-## Status
-
-Cloudflare Workers + D1 scaffold for the Bagwell Properties website.
+Bagwell Properties website — React SPA + Cloudflare Worker backend, D1 database, R2 image
+storage, with a custom admin panel. Live at **https://bp.tlbm.cc**.
 
 ## Stack & layout
 
-- **Cloudflare Workers** (`src/index.ts`) — serves static assets and `/api/*` routes.
-- **Static site** — files in `public/` (served via the `ASSETS` binding; SPA fallback on 404).
-- **D1 database** — `bagwellproperties-db`, bound as `env.DB`. Schema in `migrations/`.
-- **Config** — `wrangler.toml`. Custom-domain routes for `bagwellproperties.com` are
-  present but commented out until ready to go live.
+- **Frontend** — Vite + React 19 + Tailwind v4 + shadcn/ui in `client/`. Builds to `dist/public`.
+  - `client/src/pages/Home.tsx` — landing page, fully data-driven (fetches `/api/content` +
+    `/api/properties`, falls back to `shared/defaults.ts` so it always renders).
+  - `client/src/pages/admin/` — admin panel (`/admin`): Content, Properties, Leads, Media, Account.
+- **Backend** — Hono Worker in `worker/index.ts` (auth in `worker/auth.ts`).
+  - Public: `GET /api/content`, `GET /api/properties`, `POST /api/leads`.
+  - Auth: `POST /api/auth/login|logout`, `GET /api/auth/me` (custom login, PBKDF2 + D1 sessions).
+  - Admin (session-guarded): content/properties/leads/media CRUD + `POST /api/admin/password`.
+  - `GET /images/:key` streams from R2 (cached `immutable`); unmatched routes → static assets.
+- **Shared** — `shared/types.ts`, `shared/defaults.ts`, `shared/const.ts` (used by client + worker).
+- **Data** — D1 `bagwell-site`; schema in `migrations/`. Editable content stored one JSON blob
+  per section in the `content` table (missing keys fall back to defaults).
+- **Images** — R2 bucket `bagwell-assets`, objects under `images/`, served at `/images/<key>`.
 
 ## Commands
 
-Wrangler reads `CLOUDFLARE_API_TOKEN` from `.env` (gitignored) — `set -a; . ./.env; set +a` first,
-or rely on your shell having it exported.
+Wrangler reads `CLOUDFLARE_API_TOKEN` from `.env` — run `set -a; . ./.env; set +a` first.
 
 | Task | Command |
 | --- | --- |
-| Local dev server | `npm run dev` |
-| Deploy to Cloudflare | `npm run deploy` |
-| Live logs | `npm run tail` |
-| Apply migrations (local) | `npm run db:migrate:local` |
-| Apply migrations (remote) | `npm run db:migrate:remote` |
-| Ad-hoc SQL (remote) | `npm run db:console -- "SELECT * FROM properties" --remote` |
-| Regenerate Worker types | `npm run typegen` |
-
-New DB changes: add a numbered file in `migrations/` (e.g. `0002_*.sql`), then run the migrate command.
+| Frontend dev (proxies /api to :8787) | `npm run dev` |
+| Worker dev | `npm run dev:worker` |
+| Build | `npm run build` |
+| Deploy (build + push to CF) | `npm run deploy` |
+| Typecheck | `npm run check` |
+| Migrate D1 (remote) | `npm run db:migrate:remote` |
+| Ad-hoc SQL (remote) | `npm run db:console -- "SELECT ..."` |
 
 ## Cloudflare resources
 
+- **Worker:** `bagwellproperties` → custom domain `bp.tlbm.cc` (tlbm.cc zone)
+- **D1:** `bagwell-site` (id `a7cf06cc-1ec3-44ee-b1d8-8dccfaa629e6`)
+- **R2:** `bagwell-assets`
 - **Account ID:** `cd42ba0fcc5fcdd298c836c6b0fb038c`
-- **D1 database id:** `d21c63ff-6462-4863-8597-5fc85e7a99a5`
-- **API token:** scoped token in `.env` (id `73fc8beb8809bcf3babed960a70fbb16`); covers DNS,
-  Zones, Workers, Pages, D1, KV, R2, Queues, Workers AI across all zones on the account.
-  Manage at https://dash.cloudflare.com/profile/api-tokens
+- **Admin login:** username `admin`; password was generated at seed time — change it via the
+  Account tab in `/admin`.
+
+## Notes
+
+- This site (bp.tlbm.cc) is the NEW build. The live bagwellproperties.com site still serves from
+  GoDaddy Website Builder until we point the apex at this Worker.
+- `docs/temp/` (the original Manus zip + extracted app) is gitignored — source of truth is the repo.
